@@ -1,0 +1,16 @@
+type: object
+properties:
+  success:
+    type: boolean
+    description: Indicates whether the requested operation was successful
+    example: false
+  error:
+    type: object
+    description: >-
+      Contains parameter names or error types, each with a list of associated
+      error messages
+    additionalProperties:
+      type: array
+      description: null
+      items:
+        type: string

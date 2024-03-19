@@ -1,0 +1,135 @@
+patch:
+  tags:
+    - Customers
+  summary: Update a Customer's Information
+  description: >
+    Update a pre-existing customer's information. 
+
+    Only include the fields that need to be updated in the request body. 
+
+    Fields not included will remain unchanged.
+
+
+    >**Example**    
+
+    >To change the e-mail address of the customer whose ID is 36, use the
+    following
+
+    >```bash
+
+    >curl -X PATCH 'http://127.0.0.1:5000/api/v1/customers/36' 
+
+    >-d '{"email": "john.smith@example.com"}'
+
+    >```
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 36
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/Customer.yaml
+        example:
+          city: Toronto
+          province: Ontario
+  responses:
+    '200':
+      description: Customer successfully updated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              data:
+                allOf:
+                  - $ref: ../components/schemas/Customer.yaml
+                  - type: object
+                    properties:
+                      city:
+                        type: string
+                        example: Toronto
+                      province:
+                        type: string
+                        example: Ontario
+    '400':
+      description: Customer successfully updated
+delete:
+  tags:
+    - Customers
+  summary: Delete a Customer
+  description: >
+    Delete a customer from the records based on the provided customer ID. 
+
+    Once deleted, the customer's information will be permanently removed from
+    the system. 
+
+
+    **Please note that this action cannot be undone.**
+
+
+    >**Example**    
+
+    >To delete the customer whose ID is 36, use the following
+
+    >```bash
+
+    >curl -X DELETE 'http://127.0.0.1:5000/api/v1/customers/36'
+
+    >```
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 36
+  responses:
+    '200':
+      description: Customer successfully deleted
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    '400':
+      description: Provided ID is in an invalid format
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  id:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - Invalid ID format. ID must be an integer
+    '404':
+      description: No Customer with provided ID
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Error.yaml
+          example:
+            success: false
+            error:
+              id:
+                - Customer with provided ID not found

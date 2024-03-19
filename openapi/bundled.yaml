@@ -1,0 +1,411 @@
+openapi: 3.0.2
+info:
+  description: |
+    # Introduction
+    a customer relation manager for a kayak rental shop
+
+    ## Response Structure
+
+    ### Success Property
+    In responses from this API, you will often encounter the success property. This property indicates whether the request was successful or not. If success is true, it means the request was successful, and additional information may be included in the response. If success is false, it indicates an error occurred, and you should check the error property for details.
+
+    ### Data Property
+    The data property contains the main payload of a successful response. It typically includes the requested information, such as customer data or other relevant data objects.
+
+    ### Meta Property
+    In paginated responses, you may encounter the meta property. This property contains metadata about the response, including pagination details and additional context information.
+
+    ### Error Property
+    If an error occurs during a request, the error property will be present in the response. It includes sub-properties, each associated with a request parameter or error type, and an array of strings describing encountered issues.
+
+    Please refer to individual endpoint documentation for specific details on the response structure for each API endpoint.
+  title: Customer Relation Manager API
+  version: 1.0.0
+paths:
+  /api/v1/customers:
+    post:
+      tags:
+        - Customers
+      summary: Register a New Customer
+      description: |
+        Registers a new customer and 
+        Upon successful registration, the customer will be assigned a unique ID and provided with initial registration and expiration dates.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '201':
+          description: Customer successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the requested operation was successful
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Customer'
+                  meta:
+                    type: object
+                    description: Metadata specific to the newly registered customer
+                    properties:
+                      location:
+                        type: string
+                        example: localhost:3000/api/v1/customers/36
+                        description: A URL indicating the location of the newly registered customer
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error:
+                  first_name:
+                    - Missing data for required field.
+                  favorite_color:
+                    - Unknown field.
+        '415':
+          description: Unsupported Media Type
+    get:
+      tags:
+        - Customers
+      summary: Retrieve Existing Customers
+      description: |
+        Retrieve a list of existing customers from the kayak rental shop. 
+        By default, the first page of 20 customer records is presented. 
+        These records are part of a paginated result set and are sorted based on last names followed by first names.
+
+        ### Filtering 
+
+        You can narrow down the results by applying search filters. 
+        You may specify parameters like first name, last name, city, and province to refine your search. 
+        Search results encompass customers whose queried value(s) **begin with** the provided search term(s).
+
+        > **Example**   
+        >To find all customers whose first name starts with "jo" (e.g., 'John' or 'Joe'), and last name starts with an "s" (e.g. 'Smith' or 'Shmoe') use the following 
+        >```bash
+        >curl 'http://127.0.0.1:5000/api/v1/customers?first_name=jo&last_name=s'
+        >```
+
+        ### Sorting 
+
+        Customize the sorting order to suit your needs. 
+        You can use multiple sorting parameters, separated by commas. 
+        By default, results are sorted in ascending order. 
+        To specify a descending order, append :desc to the parameter
+
+        >**Example**      
+        >To sort customer records alphabetically by province (A-Z) and then reverse the order of cities within that province (Z-A), use this request:
+        >```bash
+        >curl 'http://127.0.0.1:5000/api/v1/customers?sort=province,city:desc'
+        >```
+
+        ### Pagination
+
+        To accommodate a potentially large number of customers, results are divided into pages. 
+        Each query result comes with metadata, including pagination details and the total result set size. 
+        Links to the previous and next pages are provided for easy navigation.
+
+        The number of customers on a page can be specified using 'limit', which defaults to 20.
+        >**Example**      
+        >To fetch the second page with 5 customers per page, use this request:
+        >```bash
+        >curl 'http://127.0.0.1:5000/api/v1/customers?page=2&limit=5'
+        >```
+      parameters:
+        - in: query
+          name: first_name
+          description: Filter the results by the first name of the customers. Partial matches will be included.
+          schema:
+            type: string
+          example: john
+        - in: query
+          name: last_name
+          description: Filter the results by the last name of the customers. Partial matches will be included.
+          schema:
+            type: string
+          example: smith
+        - in: query
+          name: city
+          description: Filter the results by the city where the customers reside. Partial matches will be included.
+          schema:
+            type: string
+          example: vancouver
+        - in: query
+          name: province
+          description: Filter the results by the province or administrative division where the customers reside. Partial matches will be included.
+          schema:
+            type: string
+          example: british+columbia
+        - name: sort
+          in: query
+          description: Sorting criteria for customers. You can specify multiple fields and their sort directions by using a comma-separated list of field:direction pairs.
+          schema:
+            type: string
+          example: last_name:asc, first_name:desc
+        - in: query
+          name: page
+          description: Indicates the page number of results to retrieve. Each page will contain a subset of the total customer records.
+          schema:
+            type: number
+            default: 1
+        - in: query
+          name: limit
+          description: The maximum number of customer records to be included in a single page of results. It determines the size of the result set per page.
+          schema:
+            type: number
+            default: 20
+      responses:
+        '200':
+          description: A list of Customers matching the provided search parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    description: Indicates whether the requested operation was successful
+                    example: true
+                  data:
+                    type: array
+                    description: A collection of all the customer records occuring on the current page of the query results
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  meta:
+                    type: object
+                    description: Encapsulates details about the organization and presentation of customer records, including pagination specifics, total record counts, and navigation links
+                    properties:
+                      page:
+                        type: integer
+                        description: Indicates the page number of the retrieved customer records
+                        example: 1
+                      limit:
+                        type: integer
+                        description: The maximum number of customer records included in a single page of results
+                        example: 20
+                      items_on_page:
+                        type: integer
+                        description: The number of customer records included in the retreived page. This will only differ from limit on the last page of the result set
+                        example: 1
+                      total_pages:
+                        type: integer
+                        description: The total number of pages required to hold all customer records matching the provided query parameters
+                        example: 1
+                      total_items:
+                        type: integer
+                        description: The total number of customer records that match the provided query parameters
+                        example: 1
+                      prev:
+                        type: string
+                        format: url
+                        description: The url pointing to the previous page of the result set
+                      next:
+                        type: string
+                        format: url
+                        description: The url pointing to the next page of the result set
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid page number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/customers/{id}:
+    patch:
+      tags:
+        - Customers
+      summary: Update a Customer's Information
+      description: |
+        Update a pre-existing customer's information. 
+        Only include the fields that need to be updated in the request body. 
+        Fields not included will remain unchanged.
+
+        >**Example**    
+        >To change the e-mail address of the customer whose ID is 36, use the following
+        >```bash
+        >curl -X PATCH 'http://127.0.0.1:5000/api/v1/customers/36' 
+        >-d '{"email": "john.smith@example.com"}'
+        >```
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 36
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+            example:
+              city: Toronto
+              province: Ontario
+      responses:
+        '200':
+          description: Customer successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Customer'
+                      - type: object
+                        properties:
+                          city:
+                            type: string
+                            example: Toronto
+                          province:
+                            type: string
+                            example: Ontario
+        '400':
+          description: Customer successfully updated
+    delete:
+      tags:
+        - Customers
+      summary: Delete a Customer
+      description: |
+        Delete a customer from the records based on the provided customer ID. 
+        Once deleted, the customer's information will be permanently removed from the system. 
+
+        **Please note that this action cannot be undone.**
+
+        >**Example**    
+        >To delete the customer whose ID is 36, use the following
+        >```bash
+        >curl -X DELETE 'http://127.0.0.1:5000/api/v1/customers/36'
+        >```
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 36
+      responses:
+        '200':
+          description: Customer successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Provided ID is in an invalid format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: object
+                    properties:
+                      id:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - Invalid ID format. ID must be an integer
+        '404':
+          description: No Customer with provided ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error:
+                  id:
+                    - Customer with provided ID not found
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates whether the requested operation was successful
+          example: false
+        error:
+          type: object
+          description: Contains parameter names or error types, each with a list of associated error messages
+          additionalProperties:
+            type: array
+            description: null
+            items:
+              type: string
+    Customer:
+      type: object
+      description: Information about a registered customer
+      properties:
+        id:
+          type: integer
+          description: A unique number used to identify the customer
+          readOnly: true
+          example: 36
+        first_name:
+          type: string
+          description: The first name of the customer
+          example: John
+        last_name:
+          type: string
+          description: The last name of the customer
+          example: Smith
+        email:
+          type: string
+          format: email
+          description: The email address of the customer
+          example: john.smith@example.com
+        phone_number:
+          type: string
+          description: The phone number of the customer
+          example: +1 604-296-1234
+        address:
+          type: string
+          description: The address of the customer
+          example: 1234 Main st
+        city:
+          type: string
+          description: The city where the customer resides
+          example: Vancouver
+        province:
+          type: string
+          description: The province or administrative division where the customer reside
+          example: British Columbia
+        register_date:
+          type: string
+          description: The date the customer initially registered
+          format: date
+          readOnly: true
+          example: 2023-06-22T21:33:30+0000
+        expire_date:
+          type: string
+          description: The last date the customer's current waiver form is valid
+          format: date
+          readOnly: true
+          example: 2024-06-22T21:33:30+0000

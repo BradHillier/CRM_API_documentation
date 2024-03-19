@@ -1,0 +1,49 @@
+type: object
+description: Information about a registered customer
+properties:
+  id:
+    type: integer
+    description: A unique number used to identify the customer
+    readOnly: true
+    example: 36
+  first_name:
+    type: string
+    description: The first name of the customer
+    example: John
+  last_name:
+    type: string
+    description: The last name of the customer
+    example: Smith
+  email:
+    type: string
+    format: email
+    description: The email address of the customer
+    example: john.smith@example.com
+  phone_number:
+    type: string
+    description: The phone number of the customer
+    example: +1 604-296-1234
+  address:
+    type: string
+    description: The address of the customer
+    example: 1234 Main st
+  city:
+    type: string
+    description: The city where the customer resides
+    example: Vancouver
+  province:
+    type: string
+    description: The province or administrative division where the customer reside
+    example: British Columbia
+  register_date:
+    type: string
+    description: The date the customer initially registered
+    format: date
+    readOnly: true
+    example: 2023-06-22T21:33:30+0000
+  expire_date:
+    type: string
+    description: The last date the customer's current waiver form is valid
+    format: date
+    readOnly: true
+    example: 2024-06-22T21:33:30+0000

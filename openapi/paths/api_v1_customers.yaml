@@ -1,0 +1,275 @@
+post:
+  tags:
+    - Customers
+  summary: Register a New Customer
+  description: >
+    Registers a new customer and 
+
+    Upon successful registration, the customer will be assigned a unique ID and
+    provided with initial registration and expiration dates.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/Customer.yaml
+  responses:
+    '201':
+      description: Customer successfully registered
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                description: Indicates whether the requested operation was successful
+                example: true
+              data:
+                $ref: ../components/schemas/Customer.yaml
+              meta:
+                type: object
+                description: Metadata specific to the newly registered customer
+                properties:
+                  location:
+                    type: string
+                    example: localhost:3000/api/v1/customers/36
+                    description: >-
+                      A URL indicating the location of the newly registered
+                      customer
+    '400':
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Error.yaml
+          example:
+            success: false
+            error:
+              first_name:
+                - Missing data for required field.
+              favorite_color:
+                - Unknown field.
+    '415':
+      description: Unsupported Media Type
+get:
+  tags:
+    - Customers
+  summary: Retrieve Existing Customers
+  description: >
+    Retrieve a list of existing customers from the kayak rental shop. 
+
+    By default, the first page of 20 customer records is presented. 
+
+    These records are part of a paginated result set and are sorted based on
+    last names followed by first names.
+
+
+    ### Filtering 
+
+
+    You can narrow down the results by applying search filters. 
+
+    You may specify parameters like first name, last name, city, and province to
+    refine your search. 
+
+    Search results encompass customers whose queried value(s) **begin with** the
+    provided search term(s).
+
+
+    > **Example**   
+
+    >To find all customers whose first name starts with "jo" (e.g., 'John' or
+    'Joe'), and last name starts with an "s" (e.g. 'Smith' or 'Shmoe') use the
+    following 
+
+    >```bash
+
+    >curl 'http://127.0.0.1:5000/api/v1/customers?first_name=jo&last_name=s'
+
+    >```
+
+
+    ### Sorting 
+
+
+    Customize the sorting order to suit your needs. 
+
+    You can use multiple sorting parameters, separated by commas. 
+
+    By default, results are sorted in ascending order. 
+
+    To specify a descending order, append :desc to the parameter
+
+
+    >**Example**      
+
+    >To sort customer records alphabetically by province (A-Z) and then reverse
+    the order of cities within that province (Z-A), use this request:
+
+    >```bash
+
+    >curl 'http://127.0.0.1:5000/api/v1/customers?sort=province,city:desc'
+
+    >```
+
+
+    ### Pagination
+
+
+    To accommodate a potentially large number of customers, results are divided
+    into pages. 
+
+    Each query result comes with metadata, including pagination details and the
+    total result set size. 
+
+    Links to the previous and next pages are provided for easy navigation.
+
+
+    The number of customers on a page can be specified using 'limit', which
+    defaults to 20.
+
+    >**Example**      
+
+    >To fetch the second page with 5 customers per page, use this request:
+
+    >```bash
+
+    >curl 'http://127.0.0.1:5000/api/v1/customers?page=2&limit=5'
+
+    >```
+  parameters:
+    - in: query
+      name: first_name
+      description: >-
+        Filter the results by the first name of the customers. Partial matches
+        will be included.
+      schema:
+        type: string
+      example: john
+    - in: query
+      name: last_name
+      description: >-
+        Filter the results by the last name of the customers. Partial matches
+        will be included.
+      schema:
+        type: string
+      example: smith
+    - in: query
+      name: city
+      description: >-
+        Filter the results by the city where the customers reside. Partial
+        matches will be included.
+      schema:
+        type: string
+      example: vancouver
+    - in: query
+      name: province
+      description: >-
+        Filter the results by the province or administrative division where the
+        customers reside. Partial matches will be included.
+      schema:
+        type: string
+      example: british+columbia
+    - name: sort
+      in: query
+      description: >-
+        Sorting criteria for customers. You can specify multiple fields and
+        their sort directions by using a comma-separated list of field:direction
+        pairs.
+      schema:
+        type: string
+      example: last_name:asc, first_name:desc
+    - in: query
+      name: page
+      description: >-
+        Indicates the page number of results to retrieve. Each page will contain
+        a subset of the total customer records.
+      schema:
+        type: number
+        default: 1
+    - in: query
+      name: limit
+      description: >-
+        The maximum number of customer records to be included in a single page
+        of results. It determines the size of the result set per page.
+      schema:
+        type: number
+        default: 20
+  responses:
+    '200':
+      description: A list of Customers matching the provided search parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                description: Indicates whether the requested operation was successful
+                example: true
+              data:
+                type: array
+                description: >-
+                  A collection of all the customer records occuring on the
+                  current page of the query results
+                items:
+                  $ref: ../components/schemas/Customer.yaml
+              meta:
+                type: object
+                description: >-
+                  Encapsulates details about the organization and presentation
+                  of customer records, including pagination specifics, total
+                  record counts, and navigation links
+                properties:
+                  page:
+                    type: integer
+                    description: >-
+                      Indicates the page number of the retrieved customer
+                      records
+                    example: 1
+                  limit:
+                    type: integer
+                    description: >-
+                      The maximum number of customer records included in a
+                      single page of results
+                    example: 20
+                  items_on_page:
+                    type: integer
+                    description: >-
+                      The number of customer records included in the retreived
+                      page. This will only differ from limit on the last page of
+                      the result set
+                    example: 1
+                  total_pages:
+                    type: integer
+                    description: >-
+                      The total number of pages required to hold all customer
+                      records matching the provided query parameters
+                    example: 1
+                  total_items:
+                    type: integer
+                    description: >-
+                      The total number of customer records that match the
+                      provided query parameters
+                    example: 1
+                  prev:
+                    type: string
+                    format: url
+                    description: The url pointing to the previous page of the result set
+                  next:
+                    type: string
+                    format: url
+                    description: The url pointing to the next page of the result set
+    '400':
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Error.yaml
+    '404':
+      description: Invalid page number
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Error.yaml
